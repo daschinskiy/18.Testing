@@ -1,0 +1,39 @@
+name: Kubernetes Manifest Validation
+
+on:
+  push:
+    paths:
+      - 'kubernetes/**'
+      - '.github/workflows/k8s-validate.yml'
+
+jobs:
+  validate-manifests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Validate Kubernetes manifests with kubeconform
+      uses: yannh/kubeconform-action@v0.6.0
+      id: validate
+      with:
+        kubernetes-version: "1.25.0"
+        ignore-missing-schemas: "true"
+        output: "json"
+        files: kubernetes/*.yml
+      
+    - name: Send Slack notification
+      if: always()
+      uses: slackapi/slack-github-action@v1.23.0
+      with:
+        channel-id: 'aalerts'
+        slack-message: |
+          ${{ job.status }}: Kubernetes manifest validation ${{ job.status }}
+          Workflow: ${{ github.workflow }}
+          Repository: ${{ github.repository }}
+          Branch: ${{ github.ref }}
+          Commit: ${{ github.sha }}
+          Details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
