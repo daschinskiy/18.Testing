@@ -7,6 +7,6 @@ COPY app.py .
 RUN pip install flask && \
     chown -R myuser:myuser /app
 
-USER myuser
+# USER myuser
 
 CMD ["python", "app.py"]
